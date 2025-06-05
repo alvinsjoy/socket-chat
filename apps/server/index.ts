@@ -49,7 +49,11 @@ io.on("connection", (socket) => {
     };
     rooms.set(roomCode, roomData);
 
-    socket.emit("room-created", roomCode);
+    socket.emit("room-created", {
+      code: roomCode,
+      name: roomData.name,
+      isPublic: roomData.public,
+    });
 
     if (isPublic) {
       io.emit("new-public-room", {
