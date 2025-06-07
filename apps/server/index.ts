@@ -95,17 +95,16 @@ io.on("connection", (socket) => {
     };
     socket.emit("room-stats", stats);
   });
-
   socket.on("join-public-room", ({ roomCode, userId, name }) => {
     const room = rooms.get(roomCode);
 
     if (!room) {
-      socket.emit("error", "Room not found");
+      socket.emit("join-failed", "Room not found");
       return;
     }
 
     if (!room.public) {
-      socket.emit("error", "Room is private");
+      socket.emit("join-failed", "Room is private");
       return;
     }
 
@@ -129,15 +128,14 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("join-room", (data) => {
-    const parsedData = JSON.parse(data);
-    const roomCode = parsedData.roomId;
+  socket.on("join-room", ({ roomCode, userId, name }) => {
     const room = rooms.get(roomCode);
 
     if (!room) {
-      socket.emit("error", "Room not found");
+      socket.emit("join-failed", "Room not found");
       return;
     }
+
     socket.join(roomCode);
     room.users.add(socket.id);
     room.lastActive = Date.now();
@@ -146,7 +144,10 @@ io.on("connection", (socket) => {
       messages: room.messages,
       roomName: room.name,
     });
-    io.to(roomCode).emit("user-joined", room.users.size);
+    io.to(roomCode).emit("user-joined", {
+      userCount: room.users.size,
+      userName: name,
+    });
 
     if (room.public) {
       io.emit("public-room-updated", {

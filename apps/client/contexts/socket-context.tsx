@@ -15,6 +15,7 @@ interface SocketContextType {
   socket: Socket | null;
   connected: boolean;
   currentRoom: string | null;
+  currentRoomName: string | null;
   messages: Message[];
   publicRooms: PublicRoom[];
   roomStats: RoomStats | null;
@@ -26,6 +27,7 @@ interface SocketContextType {
   disconnect: () => void;
   createRoom: (name: string, isPublic?: boolean) => void;
   joinRoom: (roomCode: string, userId: string, name: string) => void;
+  joinPublicRoom: (roomCode: string, userId: string, name: string) => void;
   sendMessage: (
     roomCode: string,
     message: string,
@@ -56,6 +58,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+  const [currentRoomName, setCurrentRoomName] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([]);
   const [roomStats, setRoomStats] = useState<RoomStats | null>(null);
@@ -66,21 +69,22 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     isOpen: false,
     roomData: null,
   });
-
   const connect = () => {
     if (socket?.connected) return;
 
     const socketInstance = connectSocket();
     setSocket(socketInstance);
+    socketInstance.removeAllListeners();
     socketInstance.on("connect", () => {
       setConnected(true);
     });
-
     socketInstance.on("disconnect", () => {
       setConnected(false);
       setCurrentRoom(null);
+      setCurrentRoomName(null);
       setMessages([]);
     });
+
     socketInstance.on(
       "room-created",
       (roomData: { code: string; name: string; isPublic: boolean }) => {
@@ -101,6 +105,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       "joined-room",
       (data: { roomCode: string; messages: Message[]; roomName?: string }) => {
         setCurrentRoom(data.roomCode);
+        setCurrentRoomName(data.roomName || null);
         setMessages(data.messages);
       }
     );
@@ -181,13 +186,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       toast.warning("You are already in this room.");
     });
   };
-
   const disconnect = () => {
     if (socket) {
       disconnectSocket();
       setSocket(null);
       setConnected(false);
       setCurrentRoom(null);
+      setCurrentRoomName(null);
       setMessages([]);
     }
   };
@@ -203,6 +208,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
   };
   const joinRoom = (roomCode: string, userId: string, name: string) => {
+    if (socket) {
+      if (!roomCode.trim()) {
+        toast.error("Room code cannot be empty");
+        return;
+      }
+      socket.emit("join-room", { roomCode, userId, name });
+    } else {
+      toast.error("Not connected to server. Please try again.");
+    }
+  };
+
+  const joinPublicRoom = (roomCode: string, userId: string, name: string) => {
     if (socket) {
       if (!roomCode.trim()) {
         toast.error("Room code cannot be empty");
@@ -240,6 +257,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const leaveRoom = () => {
     if (currentRoom) {
       setCurrentRoom(null);
+      setCurrentRoomName(null);
       setMessages([]);
       disconnect();
       connect();
@@ -256,6 +274,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     socket,
     connected,
     currentRoom,
+    currentRoomName,
     messages,
     publicRooms,
     roomStats,
@@ -264,6 +283,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     disconnect,
     createRoom,
     joinRoom,
+    joinPublicRoom,
     sendMessage,
     listPublicRooms,
     getRoomStats,

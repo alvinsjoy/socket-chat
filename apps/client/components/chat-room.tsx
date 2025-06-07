@@ -8,6 +8,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
+} from "@/components/ui/card";
 import { useSocket } from "@/contexts/socket-context";
 import { Message } from "@/lib/socket";
 
@@ -91,22 +98,19 @@ export default function ChatRoom({
   if (!currentRoom) {
     return null;
   }
-
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center p-4 border-b border-border bg-card">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">
-            Room: {currentRoom}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Connected as {userName}
-          </p>
-        </div>
-        <Button onClick={onLeaveRoom} variant="destructive" size="sm">
-          Leave Room
-        </Button>
-      </div>
+      <Card className="rounded-none border-x-0 border-t-0 shadow-none">
+        <CardHeader>
+          <CardTitle>Room: {currentRoom}</CardTitle>
+          <CardDescription>Connected as {userName}</CardDescription>
+          <CardAction>
+            <Button onClick={onLeaveRoom} variant="destructive" size="sm">
+              Leave Room
+            </Button>
+          </CardAction>
+        </CardHeader>
+      </Card>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.length === 0 ? (
@@ -167,6 +171,7 @@ export default function ChatRoom({
                       placeholder="Type a message..."
                       className="flex-1"
                       {...field}
+                      autoFocus
                     />
                   </FormControl>
                 </FormItem>

@@ -22,7 +22,8 @@ export default function PublicRooms({
   userId,
   userName,
 }: PublicRoomsProps) {
-  const { publicRooms, listPublicRooms, connected, joinRoom } = useSocket();
+  const { publicRooms, listPublicRooms, connected, joinPublicRoom } =
+    useSocket();
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -38,7 +39,7 @@ export default function PublicRooms({
   };
   const handleJoinRoom = (roomCode: string) => {
     try {
-      joinRoom(roomCode, userId, userName);
+      joinPublicRoom(roomCode, userId, userName);
       onRoomSelect(roomCode);
     } catch {
       toast.error("Failed to join room. Please try again.");
