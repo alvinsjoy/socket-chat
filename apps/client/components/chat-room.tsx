@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { LuCopy, LuCheck } from "react-icons/lu";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,8 @@ export default function ChatRoom({
   userId,
   userName,
 }: ChatRoomProps) {
-  const { currentRoom, messages, sendMessage } = useSocket();
+  const { currentRoom, currentRoomName, messages, sendMessage } = useSocket();
+  const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<MessageFormData>({
@@ -48,10 +50,21 @@ export default function ChatRoom({
       message: "",
     },
   });
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleCopyCode = async () => {
+    if (currentRoom) {
+      try {
+        await navigator.clipboard.writeText(currentRoom);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        toast.error("Failed to copy room code");
+      }
+    }
+  };
   const onSubmit = (data: MessageFormData) => {
     if (currentRoom) {
       try {
@@ -102,8 +115,23 @@ export default function ChatRoom({
     <div className="flex flex-col h-full">
       <Card className="rounded-none border-x-0 border-t-0 shadow-none">
         <CardHeader>
-          <CardTitle>Room: {currentRoom}</CardTitle>
-          <CardDescription>Connected as {userName}</CardDescription>
+          <CardTitle>{currentRoomName || "Chat Room"}</CardTitle>
+          <CardDescription>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Room Code:</span>
+              <div
+                className="inline-flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs font-mono cursor-pointer hover:bg-muted/80 transition-colors"
+                onClick={handleCopyCode}
+              >
+                <span>{currentRoom}</span>
+                {copied ? (
+                  <LuCheck className="h-3 w-3 text-green-500" />
+                ) : (
+                  <LuCopy className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+                )}
+              </div>
+            </div>
+          </CardDescription>
           <CardAction>
             <Button onClick={onLeaveRoom} variant="destructive" size="sm">
               Leave Room
