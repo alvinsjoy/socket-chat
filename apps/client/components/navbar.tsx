@@ -5,6 +5,7 @@ import { useSocket } from "@/contexts/socket-context";
 import { getStoredUser } from "@/lib/user";
 import ThemeSwitcher from "@/components/theme-switch";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 interface NavbarProps {
   showBackButton?: boolean;
@@ -38,7 +39,9 @@ export default function Navbar({}: NavbarProps) {
   return (
     <header className="flex justify-between items-center p-4 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center space-x-4">
-        <h1 className="text-2xl font-bold text-foreground">Socket Chat</h1>
+        <Link href="/" className="flex items-center space-x-2">
+          <h1 className="text-2xl font-bold text-foreground">Socket Chat</h1>
+        </Link>
         <ConnectionIndicator />
       </div>
       <div className="flex items-center space-x-4">

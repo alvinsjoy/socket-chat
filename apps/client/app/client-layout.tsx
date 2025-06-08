@@ -19,14 +19,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     return <>{children}</>;
   }
 
-  const showNavbar = true;
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {showNavbar && <Navbar />}
-      <main className={showNavbar ? "h-[calc(100vh-80px)]" : "min-h-screen"}>
-        {children}
-      </main>
+      <Navbar />
+      <main className="h-[calc(100vh-80px)]">{children}</main>
     </div>
   );
 }
