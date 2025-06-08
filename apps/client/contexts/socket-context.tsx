@@ -109,9 +109,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setMessages(data.messages);
       }
     );
-
     socketInstance.on("join-failed", (error: string) => {
-      toast.error(`Failed to join room: ${error}`);
+      console.log("Join failed:", error);
     });
 
     socketInstance.on("new-message", (message: Message) => {
@@ -173,13 +172,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.error("Socket error:", error);
       toast.error(`Error: ${error}`);
     });
-
     socketInstance.on("room-not-found", () => {
-      toast.error("Room not found. Please check the room code and try again.");
+      console.log("Room not found");
     });
-
     socketInstance.on("room-full", () => {
-      toast.error("Room is full. Cannot join at this time.");
+      console.log("Room full");
     });
 
     socketInstance.on("already-in-room", () => {

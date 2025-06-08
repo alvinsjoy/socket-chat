@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form";
 import { useSocket } from "@/contexts/socket-context";
 import { toast } from "sonner";
+import { getStoredUser } from "@/lib/user";
 
 const joinRoomSchema = z.object({
   roomCode: z.string().length(6, "Room code must be exactly 6 characters"),
@@ -54,35 +55,43 @@ export default function JoinRoom({ isOpen, onClose }: JoinRoomModalProps) {
     form.reset();
     onClose();
   }, [form, onClose]);
-
   useEffect(() => {
     if (socket) {
       const handleJoinFailed = (error: string) => {
         toast.error(`Failed to join room: ${error}`);
+        form.setError("roomCode", { message: error });
       };
 
-      const handleRoomNotFound = () => {};
-
-      const handleRoomFull = () => {
-        toast.error("Room is full. Cannot join at this time.");
+      const handleJoinedRoom = (data: { roomCode: string }) => {
+        handleClose();
+        router.push(`/room/${data.roomCode}`);
       };
 
       socket.on("join-failed", handleJoinFailed);
-      socket.on("room-not-found", handleRoomNotFound);
-      socket.on("room-full", handleRoomFull);
+      socket.on("joined-room", handleJoinedRoom);
 
       return () => {
         socket.off("join-failed", handleJoinFailed);
-        socket.off("room-not-found", handleRoomNotFound);
-        socket.off("room-full", handleRoomFull);
+        socket.off("joined-room", handleJoinedRoom);
       };
     }
-  }, [socket]);
+  }, [socket, form, router, handleClose]);
   const onSubmit = (data: JoinRoomFormData) => {
+    if (!socket) {
+      toast.error("Not connected to server. Please try again.");
+      return;
+    }
+
+    const user = getStoredUser();
+
+    if (!user) {
+      toast.error("Please set up your profile first.");
+      return;
+    }
+
     try {
       const roomCode = data.roomCode.toUpperCase();
-      handleClose();
-      router.push(`/room/${roomCode}`);
+      socket.emit("join-room", { roomCode, userId: user.id, name: user.name });
     } catch {
       toast.error("Failed to join room. Please try again.");
     }
