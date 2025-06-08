@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,17 +37,11 @@ type JoinRoomFormData = z.infer<typeof joinRoomSchema>;
 interface JoinRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userId: string;
-  userName: string;
 }
 
-export default function JoinRoom({
-  isOpen,
-  onClose,
-  userId,
-  userName,
-}: JoinRoomModalProps) {
-  const { joinRoom, socket } = useSocket();
+export default function JoinRoom({ isOpen, onClose }: JoinRoomModalProps) {
+  const router = useRouter();
+  const { socket } = useSocket();
 
   const form = useForm<JoinRoomFormData>({
     resolver: zodResolver(joinRoomSchema),
@@ -83,11 +78,11 @@ export default function JoinRoom({
       };
     }
   }, [socket]);
-
   const onSubmit = (data: JoinRoomFormData) => {
     try {
-      joinRoom(data.roomCode.toUpperCase(), userId, userName);
+      const roomCode = data.roomCode.toUpperCase();
       handleClose();
+      router.push(`/room/${roomCode}`);
     } catch {
       toast.error("Failed to join room. Please try again.");
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,6 +42,7 @@ interface CreateRoomModalProps {
 }
 
 export default function CreateRoom({ isOpen, onClose }: CreateRoomModalProps) {
+  const router = useRouter();
   const { createRoom, socket } = useSocket();
 
   const form = useForm<CreateRoomFormData>({
@@ -56,8 +58,15 @@ export default function CreateRoom({ isOpen, onClose }: CreateRoomModalProps) {
   }, [form, onClose]);
   useEffect(() => {
     if (socket) {
-      const handleRoomCreated = () => {
+      const handleRoomCreated = (roomData: {
+        code: string;
+        name: string;
+        isPublic: boolean;
+      }) => {
         handleClose();
+        if (roomData.isPublic) {
+          router.push(`/room/${roomData.code}`);
+        }
       };
 
       const handleRoomCreationFailed = (error: string) => {
@@ -72,7 +81,7 @@ export default function CreateRoom({ isOpen, onClose }: CreateRoomModalProps) {
         socket.off("room-creation-failed", handleRoomCreationFailed);
       };
     }
-  }, [socket, handleClose]);
+  }, [socket, handleClose, router]);
   const onSubmit = (data: CreateRoomFormData) => {
     try {
       createRoom(data.roomName, data.isPublic);
