@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LuCopy, LuCheck } from "react-icons/lu";
+import { LuCopy, LuCheck, LuSend } from "react-icons/lu";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -209,7 +209,7 @@ export default function ChatRoom({
               type="submit"
               disabled={!form.formState.isValid || form.formState.isSubmitting}
             >
-              Send
+              <LuSend />
             </Button>
           </form>
         </Form>
