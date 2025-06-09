@@ -62,9 +62,10 @@ export default function CreateRoom({ isOpen, onClose }: CreateRoomModalProps) {
         code: string;
         name: string;
         isPublic: boolean;
+        autoJoined?: boolean;
       }) => {
         handleClose();
-        if (roomData.isPublic) {
+        if (roomData.isPublic || roomData.autoJoined) {
           router.push(`/room/${roomData.code}`);
         }
       };

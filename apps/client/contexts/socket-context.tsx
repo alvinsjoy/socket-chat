@@ -10,6 +10,7 @@ import {
   PublicRoom,
   RoomStats,
 } from "@/lib/socket";
+import { getStoredUser } from "@/lib/user";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -24,6 +25,8 @@ interface SocketContextType {
     roomData: { code: string; name: string } | null;
   };
   joinError: string | null;
+  wasAutoJoined: boolean;
+  newPrivateRoom: { code: string; name: string } | null;
   connect: () => void;
   disconnect: () => void;
   createRoom: (name: string, isPublic?: boolean) => void;
@@ -40,6 +43,7 @@ interface SocketContextType {
   leaveRoom: () => void;
   closePrivateRoomAlert: () => void;
   clearJoinError: () => void;
+  clearNewPrivateRoom: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -72,6 +76,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     roomData: null,
   });
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [wasAutoJoined, setWasAutoJoined] = useState(false);
+  const [newPrivateRoom, setNewPrivateRoom] = useState<{
+    code: string;
+    name: string;
+  } | null>(null);
   const connect = useCallback(() => {
     if (socket?.connected) return;
 
@@ -87,21 +96,32 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on("connect", () => {
         setConnected(true);
       });
-
       socketInstance.on("disconnect", () => {
         setConnected(false);
         setCurrentRoom(null);
         setCurrentRoomName(null);
         setMessages([]);
+        setWasAutoJoined(false);
       });
       socketInstance.on(
         "room-created",
-        (roomData: { code: string; name: string; isPublic: boolean }) => {
+        (roomData: {
+          code: string;
+          name: string;
+          isPublic: boolean;
+          autoJoined?: boolean;
+        }) => {
           if (!roomData.isPublic) {
-            setPrivateRoomAlert({
-              isOpen: true,
-              roomData: { code: roomData.code, name: roomData.name },
+            setNewPrivateRoom({
+              code: roomData.code,
+              name: roomData.name,
             });
+          }
+          if (roomData.autoJoined) {
+            setCurrentRoom(roomData.code);
+            setCurrentRoomName(roomData.name);
+            setJoinError(null);
+            setWasAutoJoined(true);
           }
         }
       );
@@ -120,6 +140,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           setCurrentRoomName(data.roomName || null);
           setMessages(data.messages);
           setJoinError(null);
+          setWasAutoJoined(false);
         }
       );
 
@@ -213,7 +234,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         toast.error("Room name cannot be empty");
         return;
       }
-      socket.emit("create-room", { name, isPublic });
+
+      const user = getStoredUser();
+      if (user) {
+        socket.emit("create-room", {
+          name,
+          isPublic,
+          userId: user.id,
+          userName: user.name,
+        });
+      } else {
+        socket.emit("create-room", { name, isPublic });
+      }
     } else {
       toast.error("Not connected to server. Please try again.");
     }
@@ -278,6 +310,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       setCurrentRoom(null);
       setCurrentRoomName(null);
       setMessages([]);
+      setWasAutoJoined(false);
+      setNewPrivateRoom(null);
     }
   };
   const closePrivateRoomAlert = () => {
@@ -289,6 +323,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const clearJoinError = useCallback(() => {
     setJoinError(null);
   }, []);
+  const clearNewPrivateRoom = useCallback(() => {
+    setNewPrivateRoom(null);
+  }, []);
   const value: SocketContextType = {
     socket,
     connected,
@@ -299,6 +336,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     roomStats,
     privateRoomAlert,
     joinError,
+    wasAutoJoined,
+    newPrivateRoom,
     connect,
     disconnect,
     createRoom,
@@ -310,6 +349,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     leaveRoom,
     closePrivateRoomAlert,
     clearJoinError,
+    clearNewPrivateRoom,
   };
 
   return (

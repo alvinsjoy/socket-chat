@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,7 +42,7 @@ interface JoinRoomModalProps {
 
 export default function JoinRoom({ isOpen, onClose }: JoinRoomModalProps) {
   const router = useRouter();
-  const { socket } = useSocket();
+  const { joinRoom, clearJoinError } = useSocket();
 
   const form = useForm<JoinRoomFormData>({
     resolver: zodResolver(joinRoomSchema),
@@ -50,38 +50,13 @@ export default function JoinRoom({ isOpen, onClose }: JoinRoomModalProps) {
       roomCode: "",
     },
   });
-
   const handleClose = useCallback(() => {
     form.reset();
+    clearJoinError();
     onClose();
-  }, [form, onClose]);
-  useEffect(() => {
-    if (socket) {
-      const handleJoinFailed = (error: string) => {
-        toast.error(`Failed to join room: ${error}`);
-        form.setError("roomCode", { message: error });
-      };
+  }, [form, onClose, clearJoinError]);
 
-      const handleJoinedRoom = (data: { roomCode: string }) => {
-        handleClose();
-        router.push(`/room/${data.roomCode}`);
-      };
-
-      socket.on("join-failed", handleJoinFailed);
-      socket.on("joined-room", handleJoinedRoom);
-
-      return () => {
-        socket.off("join-failed", handleJoinFailed);
-        socket.off("joined-room", handleJoinedRoom);
-      };
-    }
-  }, [socket, form, router, handleClose]);
   const onSubmit = (data: JoinRoomFormData) => {
-    if (!socket) {
-      toast.error("Not connected to server. Please try again.");
-      return;
-    }
-
     const user = getStoredUser();
 
     if (!user) {
@@ -91,7 +66,9 @@ export default function JoinRoom({ isOpen, onClose }: JoinRoomModalProps) {
 
     try {
       const roomCode = data.roomCode.toUpperCase();
-      socket.emit("join-room", { roomCode, userId: user.id, name: user.name });
+      joinRoom(roomCode, user.id, user.name);
+      handleClose();
+      router.push(`/room/${roomCode}`);
     } catch {
       toast.error("Failed to join room. Please try again.");
     }

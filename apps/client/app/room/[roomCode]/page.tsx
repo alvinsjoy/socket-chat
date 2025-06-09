@@ -9,6 +9,7 @@ import UserSetup from "@/components/user-setup";
 import { Button } from "@/components/ui/button";
 import { LuOctagonAlert } from "react-icons/lu";
 import Link from "next/link";
+import { PrivateRoomAlert } from "@/components/private-room-alert";
 
 export default function RoomPage() {
   const params = useParams();
@@ -22,6 +23,9 @@ export default function RoomPage() {
     joinRoom,
     joinError,
     clearJoinError,
+    wasAutoJoined,
+    newPrivateRoom,
+    clearNewPrivateRoom,
   } = useSocket();
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -43,7 +47,8 @@ export default function RoomPage() {
       roomCode &&
       !isJoining &&
       !joinError &&
-      !hasAttemptedJoin;
+      !hasAttemptedJoin &&
+      !wasAutoJoined;
     if (shouldAttemptJoin) {
       setIsJoining(true);
       setHasAttemptedJoin(true);
@@ -59,6 +64,7 @@ export default function RoomPage() {
     joinError,
     hasAttemptedJoin,
     clearJoinError,
+    wasAutoJoined,
   ]);
   useEffect(() => {
     if (currentRoom) {
@@ -142,12 +148,20 @@ export default function RoomPage() {
       </div>
     );
   }
-
   return (
-    <ChatRoom
-      onLeaveRoom={handleLeaveRoom}
-      userId={user.id}
-      userName={user.name}
-    />
+    <>
+      <ChatRoom
+        onLeaveRoom={handleLeaveRoom}
+        userId={user.id}
+        userName={user.name}
+      />{" "}
+      {newPrivateRoom && newPrivateRoom.code === roomCode.toUpperCase() && (
+        <PrivateRoomAlert
+          isOpen={true}
+          onClose={clearNewPrivateRoom}
+          roomData={newPrivateRoom}
+        />
+      )}
+    </>
   );
 }

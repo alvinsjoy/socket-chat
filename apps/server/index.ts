@@ -33,9 +33,8 @@ const rooms = new Map<string, RoomData>();
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
-
   socket.on("create-room", (data) => {
-    const { name, isPublic = true } = data || {};
+    const { name, isPublic = true, userId, userName } = data || {};
     const roomCode = randomBytes(3).toString("hex").toUpperCase();
     const now = Date.now();
     const roomData = {
@@ -47,18 +46,36 @@ io.on("connection", (socket) => {
       createdAt: now,
     };
     rooms.set(roomCode, roomData);
+    if (userId && userName) {
+      socket.join(roomCode);
+      roomData.users.add(socket.id);
 
-    socket.emit("room-created", {
-      code: roomCode,
-      name: roomData.name,
-      isPublic: roomData.public,
-    });
+      socket.emit("room-created", {
+        code: roomCode,
+        name: roomData.name,
+        isPublic: roomData.public,
+        autoJoined: true,
+      });
+
+      socket.emit("joined-room", {
+        roomCode,
+        messages: roomData.messages,
+        roomName: roomData.name,
+      });
+    } else {
+      socket.emit("room-created", {
+        code: roomCode,
+        name: roomData.name,
+        isPublic: roomData.public,
+        autoJoined: false,
+      });
+    }
 
     if (isPublic) {
       io.emit("new-public-room", {
         code: roomCode,
         name: roomData.name,
-        userCount: 0,
+        userCount: roomData.users.size,
         lastActive: now,
         createdAt: now,
       });

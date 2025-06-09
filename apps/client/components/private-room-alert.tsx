@@ -25,14 +25,12 @@ interface PrivateRoomAlertProps {
     code: string;
     name: string;
   };
-  onJoinRoom: () => void;
 }
 
 export function PrivateRoomAlert({
   isOpen,
   onClose,
   roomData,
-  onJoinRoom,
 }: PrivateRoomAlertProps) {
   const [copied, setCopied] = useState(false);
   const handleCopyCode = async () => {
@@ -43,11 +41,6 @@ export function PrivateRoomAlert({
     } catch {
       toast.error("Failed to copy room code");
     }
-  };
-
-  const handleJoinRoom = () => {
-    onJoinRoom();
-    onClose();
   };
 
   return (
@@ -102,12 +95,8 @@ export function PrivateRoomAlert({
           </AlertDialogDescription>
         </AlertDialogHeader>{" "}
         <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button onClick={handleJoinRoom} className="flex items-center gap-2">
-            <LuMessageCircleDashed className="h-4 w-4" />
-            Join Room Now
-          </Button>
-          <Button onClick={onClose} variant="destructive">
-            Close
+          <Button onClick={onClose} variant="outline" className="w-full">
+            Got it
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

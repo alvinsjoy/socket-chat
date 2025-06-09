@@ -49,12 +49,6 @@ export default function Home() {
     router.push(`/room/${roomCode}`);
   };
 
-  const handleJoinPrivateRoom = () => {
-    if (privateRoomAlert.roomData && user) {
-      router.push(`/room/${privateRoomAlert.roomData.code}`);
-    }
-  };
-
   if (!user) {
     return <UserSetup onUserCreated={handleUserCreated} />;
   }
@@ -104,7 +98,6 @@ export default function Home() {
           isOpen={privateRoomAlert.isOpen}
           onClose={closePrivateRoomAlert}
           roomData={privateRoomAlert.roomData}
-          onJoinRoom={handleJoinPrivateRoom}
         />
       )}
     </div>
