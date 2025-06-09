@@ -85,22 +85,18 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     const setupEventListeners = () => {
       socketInstance.on("connect", () => {
-        console.log("Connected to server");
         setConnected(true);
       });
 
       socketInstance.on("disconnect", () => {
-        console.log("Disconnected from server");
         setConnected(false);
         setCurrentRoom(null);
         setCurrentRoomName(null);
         setMessages([]);
       });
-
       socketInstance.on(
         "room-created",
         (roomData: { code: string; name: string; isPublic: boolean }) => {
-          console.log("Room created:", roomData);
           if (!roomData.isPublic) {
             setPrivateRoomAlert({
               isOpen: true,
@@ -113,7 +109,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on("room-creation-failed", (error: string) => {
         toast.error(`Failed to create room: ${error}`);
       });
-
       socketInstance.on(
         "joined-room",
         (data: {
@@ -121,7 +116,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           messages: Message[];
           roomName?: string;
         }) => {
-          console.log("Successfully joined room:", data.roomCode);
           setCurrentRoom(data.roomCode);
           setCurrentRoomName(data.roomName || null);
           setMessages(data.messages);
@@ -130,7 +124,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       );
 
       socketInstance.on("join-failed", (error: string) => {
-        console.log("Join failed:", error);
         setJoinError(error);
         toast.error(`Failed to join room: ${error}`);
       });
@@ -138,11 +131,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on("new-message", (message: Message) => {
         setMessages((prev) => [...prev, message]);
       });
-
       socketInstance.on(
         "user-joined",
         (data: { userCount: number; userName?: string }) => {
-          console.log("User joined:", data);
           if (data.userName) {
             toast.info(`${data.userName} joined the room`);
           }
@@ -152,7 +143,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on(
         "user-left",
         (data: { userCount: number; userName?: string }) => {
-          console.log("User left, count:", data.userCount);
           if (data.userName) {
             toast.info(`${data.userName} left the room`);
           }
@@ -196,15 +186,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         console.error("Socket error:", error);
         toast.error(`Error: ${error}`);
       });
-
       socketInstance.on("room-not-found", () => {
-        console.log("Room not found");
         setJoinError("Room not found");
-      });
-
-      socketInstance.on("room-full", () => {
-        console.log("Room full");
-        setJoinError("Room is full");
       });
 
       socketInstance.on("already-in-room", () => {
@@ -290,12 +273,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
   };
   const leaveRoom = () => {
-    if (currentRoom) {
+    if (currentRoom && socket) {
+      socket.emit("leave-room", { roomCode: currentRoom });
       setCurrentRoom(null);
       setCurrentRoomName(null);
       setMessages([]);
-      disconnect();
-      connect();
     }
   };
   const closePrivateRoomAlert = () => {

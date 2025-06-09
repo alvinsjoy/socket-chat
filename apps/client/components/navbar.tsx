@@ -7,13 +7,7 @@ import ThemeSwitcher from "@/components/theme-switch";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
-interface NavbarProps {
-  showBackButton?: boolean;
-  backButtonText?: string;
-  onBackClick?: () => void;
-}
-
-export default function Navbar({}: NavbarProps) {
+export default function Navbar() {
   const { connected } = useSocket();
   const [user, setUser] = React.useState<{ id: string; name: string } | null>(
     null

@@ -30,10 +30,8 @@ export default function RoomPage() {
   useEffect(() => {
     setUser(getStoredUser());
   }, []);
-
   useEffect(() => {
     if (user && !connected) {
-      console.log("User found, connecting to socket...");
       connect();
     }
   }, [user, connected, connect]);
@@ -46,9 +44,7 @@ export default function RoomPage() {
       !isJoining &&
       !joinError &&
       !hasAttemptedJoin;
-
     if (shouldAttemptJoin) {
-      console.log("Conditions met, attempting to join room:", roomCode);
       setIsJoining(true);
       setHasAttemptedJoin(true);
       joinRoom(roomCode.toUpperCase(), user.id, user.name);
@@ -64,18 +60,14 @@ export default function RoomPage() {
     hasAttemptedJoin,
     clearJoinError,
   ]);
-
   useEffect(() => {
     if (currentRoom) {
-      console.log("Successfully joined room, resetting state");
       setIsJoining(false);
       setHasAttemptedJoin(false);
     }
   }, [currentRoom]);
-
   useEffect(() => {
     if (joinError) {
-      console.log("Join error detected:", joinError);
       setIsJoining(false);
     }
   }, [joinError]);
@@ -87,7 +79,6 @@ export default function RoomPage() {
   );
   const handleRetry = useCallback(() => {
     if (user) {
-      console.log("Retrying room join for:", roomCode);
       clearJoinError();
       setIsJoining(true);
       setHasAttemptedJoin(false);
@@ -95,7 +86,6 @@ export default function RoomPage() {
     }
   }, [user, clearJoinError, joinRoom, roomCode]);
   const handleLeaveRoom = useCallback(() => {
-    console.log("Leaving room and returning home");
     leaveRoom();
     clearJoinError();
     router.push("/");
@@ -122,13 +112,11 @@ export default function RoomPage() {
           <LuOctagonAlert className="text-destructive text-6xl mb-4" />
           <h2 className="text-2xl font-bold text-foreground">
             {joinError === "Room not found" ? "Room Not Found" : "Join Failed"}
-          </h2>
+          </h2>{" "}
           <p className="text-muted-foreground">
             {joinError === "Room not found"
               ? `The room "${roomCode.toUpperCase()}" could not be found. It may have been deleted or the code is incorrect.`
-              : joinError === "Room is full"
-                ? `The room "${roomCode.toUpperCase()}" is currently full. Please try again later.`
-                : `Unable to join room "${roomCode.toUpperCase()}". ${errorMessage}.`}
+              : `Unable to join room "${roomCode.toUpperCase()}". ${errorMessage}.`}
           </p>{" "}
           <div className="space-y-2">
             <Button onClick={handleRetry} className="w-full" variant="default">

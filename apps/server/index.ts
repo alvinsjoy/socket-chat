@@ -34,7 +34,6 @@ const rooms = new Map<string, RoomData>();
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("set-user-id", (userId: string) => {});
   socket.on("create-room", (data) => {
     const { name, isPublic = true } = data || {};
     const roomCode = randomBytes(3).toString("hex").toUpperCase();
@@ -108,6 +107,11 @@ io.on("connection", (socket) => {
       return;
     }
 
+    if (room.users.has(socket.id)) {
+      socket.emit("already-in-room");
+      return;
+    }
+
     socket.join(roomCode);
     room.users.add(socket.id);
     room.lastActive = Date.now();
@@ -127,37 +131,45 @@ io.on("connection", (socket) => {
       lastActive: room.lastActive,
     });
   });
-
   socket.on("join-room", ({ roomCode, userId, name }) => {
-    const room = rooms.get(roomCode);
+    try {
+      const room = rooms.get(roomCode);
 
-    if (!room) {
-      socket.emit("join-failed", "Room not found");
-      return;
-    }
+      if (!room) {
+        socket.emit("room-not-found");
+        return;
+      }
 
-    socket.join(roomCode);
-    room.users.add(socket.id);
-    room.lastActive = Date.now();
-    socket.emit("joined-room", {
-      roomCode,
-      messages: room.messages,
-      roomName: room.name,
-    });
-    io.to(roomCode).emit("user-joined", {
-      userCount: room.users.size,
-      userName: name,
-    });
+      if (room.users.has(socket.id)) {
+        socket.emit("already-in-room");
+        return;
+      }
 
-    if (room.public) {
-      io.emit("public-room-updated", {
-        code: roomCode,
-        userCount: room.users.size,
-        lastActive: room.lastActive,
+      socket.join(roomCode);
+      room.users.add(socket.id);
+      room.lastActive = Date.now();
+      socket.emit("joined-room", {
+        roomCode,
+        messages: room.messages,
+        roomName: room.name,
       });
+      io.to(roomCode).emit("user-joined", {
+        userCount: room.users.size,
+        userName: name,
+      });
+
+      if (room.public) {
+        io.emit("public-room-updated", {
+          code: roomCode,
+          userCount: room.users.size,
+          lastActive: room.lastActive,
+        });
+      }
+    } catch (error) {
+      console.error("Error joining room:", error);
+      socket.emit("join-failed", "Internal server error");
     }
   });
-
   socket.on("send-message", ({ roomCode, message, userId, name }) => {
     const room = rooms.get(roomCode);
     if (room) {
@@ -171,6 +183,34 @@ io.on("connection", (socket) => {
       };
       room.messages.push(messageData);
       io.to(roomCode).emit("new-message", messageData);
+    }
+  });
+
+  socket.on("leave-room", ({ roomCode }) => {
+    const room = rooms.get(roomCode);
+    if (room && room.users.has(socket.id)) {
+      socket.leave(roomCode);
+      room.users.delete(socket.id);
+
+      io.to(roomCode).emit("user-left", {
+        userCount: room.users.size,
+      });
+
+      if (room.public && room.users.size > 0) {
+        io.emit("public-room-updated", {
+          code: roomCode,
+          userCount: room.users.size,
+          lastActive: Date.now(),
+        });
+      }
+
+      if (room.users.size === 0) {
+        console.log(`Deleting empty room: ${roomCode}`);
+        if (room.public) {
+          io.emit("public-room-deleted", roomCode);
+        }
+        rooms.delete(roomCode);
+      }
     }
   });
   socket.on("disconnect", () => {
