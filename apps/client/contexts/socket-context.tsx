@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import {
@@ -23,6 +23,7 @@ interface SocketContextType {
     isOpen: boolean;
     roomData: { code: string; name: string } | null;
   };
+  joinError: string | null;
   connect: () => void;
   disconnect: () => void;
   createRoom: (name: string, isPublic?: boolean) => void;
@@ -38,6 +39,7 @@ interface SocketContextType {
   getRoomStats: () => void;
   leaveRoom: () => void;
   closePrivateRoomAlert: () => void;
+  clearJoinError: () => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -69,120 +71,149 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     isOpen: false,
     roomData: null,
   });
-  const connect = () => {
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const connect = useCallback(() => {
     if (socket?.connected) return;
+
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+    }
 
     const socketInstance = connectSocket();
     setSocket(socketInstance);
-    socketInstance.removeAllListeners();
-    socketInstance.on("connect", () => {
-      setConnected(true);
-    });
-    socketInstance.on("disconnect", () => {
-      setConnected(false);
-      setCurrentRoom(null);
-      setCurrentRoomName(null);
-      setMessages([]);
-    });
 
-    socketInstance.on(
-      "room-created",
-      (roomData: { code: string; name: string; isPublic: boolean }) => {
-        console.log("Room created:", roomData);
-        if (!roomData.isPublic) {
-          setPrivateRoomAlert({
-            isOpen: true,
-            roomData: { code: roomData.code, name: roomData.name },
-          });
+    const setupEventListeners = () => {
+      socketInstance.on("connect", () => {
+        console.log("Connected to server");
+        setConnected(true);
+      });
+
+      socketInstance.on("disconnect", () => {
+        console.log("Disconnected from server");
+        setConnected(false);
+        setCurrentRoom(null);
+        setCurrentRoomName(null);
+        setMessages([]);
+      });
+
+      socketInstance.on(
+        "room-created",
+        (roomData: { code: string; name: string; isPublic: boolean }) => {
+          console.log("Room created:", roomData);
+          if (!roomData.isPublic) {
+            setPrivateRoomAlert({
+              isOpen: true,
+              roomData: { code: roomData.code, name: roomData.name },
+            });
+          }
         }
-      }
-    );
+      );
 
-    socketInstance.on("room-creation-failed", (error: string) => {
-      toast.error(`Failed to create room: ${error}`);
-    });
-    socketInstance.on(
-      "joined-room",
-      (data: { roomCode: string; messages: Message[]; roomName?: string }) => {
-        setCurrentRoom(data.roomCode);
-        setCurrentRoomName(data.roomName || null);
-        setMessages(data.messages);
-      }
-    );
-    socketInstance.on("join-failed", (error: string) => {
-      console.log("Join failed:", error);
-    });
+      socketInstance.on("room-creation-failed", (error: string) => {
+        toast.error(`Failed to create room: ${error}`);
+      });
 
-    socketInstance.on("new-message", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-    socketInstance.on(
-      "user-joined",
-      (data: { userCount: number; userName?: string }) => {
-        console.log("User joined:", data);
-        if (data.userName) {
-          toast.info(`${data.userName} joined the room`);
+      socketInstance.on(
+        "joined-room",
+        (data: {
+          roomCode: string;
+          messages: Message[];
+          roomName?: string;
+        }) => {
+          console.log("Successfully joined room:", data.roomCode);
+          setCurrentRoom(data.roomCode);
+          setCurrentRoomName(data.roomName || null);
+          setMessages(data.messages);
+          setJoinError(null);
         }
-      }
-    );
+      );
 
-    socketInstance.on(
-      "user-left",
-      (data: { userCount: number; userName?: string }) => {
-        console.log("User left, count:", data.userCount);
-        if (data.userName) {
-          toast.info(`${data.userName} left the room`);
+      socketInstance.on("join-failed", (error: string) => {
+        console.log("Join failed:", error);
+        setJoinError(error);
+        toast.error(`Failed to join room: ${error}`);
+      });
+
+      socketInstance.on("new-message", (message: Message) => {
+        setMessages((prev) => [...prev, message]);
+      });
+
+      socketInstance.on(
+        "user-joined",
+        (data: { userCount: number; userName?: string }) => {
+          console.log("User joined:", data);
+          if (data.userName) {
+            toast.info(`${data.userName} joined the room`);
+          }
         }
-      }
-    );
+      );
 
-    socketInstance.on("public-rooms-list", (rooms: PublicRoom[]) => {
-      setPublicRooms(rooms);
-    });
+      socketInstance.on(
+        "user-left",
+        (data: { userCount: number; userName?: string }) => {
+          console.log("User left, count:", data.userCount);
+          if (data.userName) {
+            toast.info(`${data.userName} left the room`);
+          }
+        }
+      );
 
-    socketInstance.on("room-stats", (stats: RoomStats) => {
-      setRoomStats(stats);
-    });
+      socketInstance.on("public-rooms-list", (rooms: PublicRoom[]) => {
+        setPublicRooms(rooms);
+      });
 
-    socketInstance.on("new-public-room", (room: PublicRoom) => {
-      setPublicRooms((prev) => [room, ...prev]);
-    });
+      socketInstance.on("room-stats", (stats: RoomStats) => {
+        setRoomStats(stats);
+      });
 
-    socketInstance.on(
-      "public-room-updated",
-      (update: { code: string; userCount: number; lastActive: number }) => {
-        setPublicRooms((prev) =>
-          prev.map((room) =>
-            room.code === update.code
-              ? {
-                  ...room,
-                  userCount: update.userCount,
-                  lastActive: update.lastActive,
-                }
-              : room
-          )
-        );
-      }
-    );
+      socketInstance.on("new-public-room", (room: PublicRoom) => {
+        setPublicRooms((prev) => [room, ...prev]);
+      });
 
-    socketInstance.on("public-room-deleted", (roomCode: string) => {
-      setPublicRooms((prev) => prev.filter((room) => room.code !== roomCode));
-    });
-    socketInstance.on("error", (error: string) => {
-      console.error("Socket error:", error);
-      toast.error(`Error: ${error}`);
-    });
-    socketInstance.on("room-not-found", () => {
-      console.log("Room not found");
-    });
-    socketInstance.on("room-full", () => {
-      console.log("Room full");
-    });
+      socketInstance.on(
+        "public-room-updated",
+        (update: { code: string; userCount: number; lastActive: number }) => {
+          setPublicRooms((prev) =>
+            prev.map((room) =>
+              room.code === update.code
+                ? {
+                    ...room,
+                    userCount: update.userCount,
+                    lastActive: update.lastActive,
+                  }
+                : room
+            )
+          );
+        }
+      );
 
-    socketInstance.on("already-in-room", () => {
-      toast.warning("You are already in this room.");
-    });
-  };
+      socketInstance.on("public-room-deleted", (roomCode: string) => {
+        setPublicRooms((prev) => prev.filter((room) => room.code !== roomCode));
+      });
+
+      socketInstance.on("error", (error: string) => {
+        console.error("Socket error:", error);
+        toast.error(`Error: ${error}`);
+      });
+
+      socketInstance.on("room-not-found", () => {
+        console.log("Room not found");
+        setJoinError("Room not found");
+      });
+
+      socketInstance.on("room-full", () => {
+        console.log("Room full");
+        setJoinError("Room is full");
+      });
+
+      socketInstance.on("already-in-room", () => {
+        toast.warning("You are already in this room.");
+      });
+    };
+
+    setupEventListeners();
+  }, [socket]);
   const disconnect = () => {
     if (socket) {
       disconnectSocket();
@@ -204,17 +235,24 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       toast.error("Not connected to server. Please try again.");
     }
   };
-  const joinRoom = (roomCode: string, userId: string, name: string) => {
-    if (socket) {
+  const joinRoom = useCallback(
+    (roomCode: string, userId: string, name: string) => {
+      if (!socket || !socket.connected) {
+        toast.error("Not connected to server. Please try again.");
+        return;
+      }
+
       if (!roomCode.trim()) {
         toast.error("Room code cannot be empty");
         return;
       }
+
+      console.log("Attempting to join room:", roomCode);
+      setJoinError(null);
       socket.emit("join-room", { roomCode, userId, name });
-    } else {
-      toast.error("Not connected to server. Please try again.");
-    }
-  };
+    },
+    [socket]
+  );
 
   const joinPublicRoom = (roomCode: string, userId: string, name: string) => {
     if (socket) {
@@ -260,13 +298,15 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       connect();
     }
   };
-
   const closePrivateRoomAlert = () => {
     setPrivateRoomAlert({
       isOpen: false,
       roomData: null,
     });
   };
+  const clearJoinError = useCallback(() => {
+    setJoinError(null);
+  }, []);
   const value: SocketContextType = {
     socket,
     connected,
@@ -276,6 +316,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     publicRooms,
     roomStats,
     privateRoomAlert,
+    joinError,
     connect,
     disconnect,
     createRoom,
@@ -286,6 +327,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     getRoomStats,
     leaveRoom,
     closePrivateRoomAlert,
+    clearJoinError,
   };
 
   return (
