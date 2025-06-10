@@ -111,49 +111,12 @@ io.on("connection", (socket) => {
     };
     socket.emit("room-stats", stats);
   });
-  socket.on("join-public-room", ({ roomCode, userId, name }) => {
-    const room = rooms.get(roomCode);
-
-    if (!room) {
-      socket.emit("join-failed", "Room not found");
-      return;
-    }
-
-    if (!room.public) {
-      socket.emit("join-failed", "Room is private");
-      return;
-    }
-
-    if (room.users.has(socket.id)) {
-      socket.emit("already-in-room");
-      return;
-    }
-
-    socket.join(roomCode);
-    room.users.add(socket.id);
-    room.lastActive = Date.now();
-    socket.emit("joined-room", {
-      roomCode,
-      messages: room.messages,
-      roomName: room.name,
-    });
-    io.to(roomCode).emit("user-joined", {
-      userCount: room.users.size,
-      userName: name,
-    });
-
-    io.emit("public-room-updated", {
-      code: roomCode,
-      userCount: room.users.size,
-      lastActive: room.lastActive,
-    });
-  });
   socket.on("join-room", ({ roomCode, userId, name }) => {
     try {
       const room = rooms.get(roomCode);
 
       if (!room) {
-        socket.emit("room-not-found");
+        socket.emit("join-failed", "Room not found");
         return;
       }
 

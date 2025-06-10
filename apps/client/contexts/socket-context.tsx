@@ -31,7 +31,6 @@ interface SocketContextType {
   disconnect: () => void;
   createRoom: (name: string, isPublic?: boolean) => void;
   joinRoom: (roomCode: string, userId: string, name: string) => void;
-  joinPublicRoom: (roomCode: string, userId: string, name: string) => void;
   sendMessage: (
     roomCode: string,
     message: string,
@@ -202,13 +201,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on("public-room-deleted", (roomCode: string) => {
         setPublicRooms((prev) => prev.filter((room) => room.code !== roomCode));
       });
-
       socketInstance.on("error", (error: string) => {
         console.error("Socket error:", error);
         toast.error(`Error: ${error}`);
-      });
-      socketInstance.on("room-not-found", () => {
-        setJoinError("Room not found");
       });
 
       socketInstance.on("already-in-room", () => {
@@ -268,18 +263,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     },
     [socket]
   );
-
-  const joinPublicRoom = (roomCode: string, userId: string, name: string) => {
-    if (socket) {
-      if (!roomCode.trim()) {
-        toast.error("Room code cannot be empty");
-        return;
-      }
-      socket.emit("join-public-room", { roomCode, userId, name });
-    } else {
-      toast.error("Not connected to server. Please try again.");
-    }
-  };
   const sendMessage = (
     roomCode: string,
     message: string,
@@ -342,7 +325,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     disconnect,
     createRoom,
     joinRoom,
-    joinPublicRoom,
     sendMessage,
     listPublicRooms,
     getRoomStats,
