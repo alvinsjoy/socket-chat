@@ -10,6 +10,7 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { useSocket } from "@/contexts/socket-context";
+import { LuClock } from "react-icons/lu";
 
 interface PublicRoomsProps {
   onRoomSelect: (roomCode: string) => void;
@@ -57,10 +58,24 @@ export default function PublicRooms({
         >
           Refresh
         </Button>
-      </div>
+      </div>{" "}
       {!connected && (
-        <div className="text-center text-muted-foreground py-8">
-          Connecting to server...
+        <div className="space-y-4">
+          <div className="text-center text-muted-foreground py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p>Connecting to server...</p>
+          </div>
+          <div className="bg-chart-1/10 border border-chart-1/20 rounded-lg p-4">
+            <p className="text-sm text-chart-1 font-medium flex items-center gap-2">
+              <LuClock className="h-4 w-4" />
+              Server is hosted on Render (Free Tier)
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              The server may take up to <strong>50 seconds</strong> to boot up
+              as Render spins down a Free web service that goes 15 minutes
+              without traffic.
+            </p>
+          </div>
         </div>
       )}
       {connected && publicRooms.length === 0 && (
