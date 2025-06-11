@@ -24,7 +24,10 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:3000", "https://socket-chat-client-three.vercel.app"],
+    origin: [
+      "http://localhost:3000",
+      process.env.CLIENT_URL || "http://localhost:3000",
+    ],
     methods: ["GET", "POST"],
   },
 });
