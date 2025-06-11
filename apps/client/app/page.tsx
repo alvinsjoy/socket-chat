@@ -7,20 +7,13 @@ import CreateRoom from "@/components/create-room";
 import JoinRoom from "@/components/join-room";
 import PublicRooms from "@/components/public-rooms";
 import RoomStats from "@/components/room-stats";
-import { PrivateRoomAlert } from "@/components/private-room-alert";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/contexts/socket-context";
 import { getStoredUser } from "@/lib/user";
 
 export default function Home() {
   const router = useRouter();
-  const {
-    connected,
-    connect,
-    listPublicRooms,
-    privateRoomAlert,
-    closePrivateRoomAlert,
-  } = useSocket();
+  const { connected, connect, listPublicRooms } = useSocket();
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showJoinRoom, setShowJoinRoom] = useState(false);
@@ -92,14 +85,6 @@ export default function Home() {
         onClose={() => setShowCreateRoom(false)}
       />
       <JoinRoom isOpen={showJoinRoom} onClose={() => setShowJoinRoom(false)} />
-
-      {privateRoomAlert.roomData && (
-        <PrivateRoomAlert
-          isOpen={privateRoomAlert.isOpen}
-          onClose={closePrivateRoomAlert}
-          roomData={privateRoomAlert.roomData}
-        />
-      )}
     </div>
   );
 }

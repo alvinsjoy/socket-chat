@@ -20,10 +20,6 @@ interface SocketContextType {
   messages: Message[];
   publicRooms: PublicRoom[];
   roomStats: RoomStats | null;
-  privateRoomAlert: {
-    isOpen: boolean;
-    roomData: { code: string; name: string } | null;
-  };
   joinError: string | null;
   wasAutoJoined: boolean;
   newPrivateRoom: { code: string; name: string } | null;
@@ -40,7 +36,6 @@ interface SocketContextType {
   listPublicRooms: () => void;
   getRoomStats: () => void;
   leaveRoom: () => void;
-  closePrivateRoomAlert: () => void;
   clearJoinError: () => void;
   clearNewPrivateRoom: () => void;
 }
@@ -67,13 +62,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([]);
   const [roomStats, setRoomStats] = useState<RoomStats | null>(null);
-  const [privateRoomAlert, setPrivateRoomAlert] = useState<{
-    isOpen: boolean;
-    roomData: { code: string; name: string } | null;
-  }>({
-    isOpen: false,
-    roomData: null,
-  });
   const [joinError, setJoinError] = useState<string | null>(null);
   const [wasAutoJoined, setWasAutoJoined] = useState(false);
   const [newPrivateRoom, setNewPrivateRoom] = useState<{
@@ -297,12 +285,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       setNewPrivateRoom(null);
     }
   };
-  const closePrivateRoomAlert = () => {
-    setPrivateRoomAlert({
-      isOpen: false,
-      roomData: null,
-    });
-  };
   const clearJoinError = useCallback(() => {
     setJoinError(null);
   }, []);
@@ -317,7 +299,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     messages,
     publicRooms,
     roomStats,
-    privateRoomAlert,
     joinError,
     wasAutoJoined,
     newPrivateRoom,
@@ -329,7 +310,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     listPublicRooms,
     getRoomStats,
     leaveRoom,
-    closePrivateRoomAlert,
     clearJoinError,
     clearNewPrivateRoom,
   };
