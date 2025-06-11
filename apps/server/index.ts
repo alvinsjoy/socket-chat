@@ -165,8 +165,7 @@ io.on("connection", (socket) => {
       io.to(roomCode).emit("new-message", messageData);
     }
   });
-
-  socket.on("leave-room", ({ roomCode }) => {
+  socket.on("leave-room", ({ roomCode, name }) => {
     const room = rooms.get(roomCode);
     if (room && room.users.has(socket.id)) {
       socket.leave(roomCode);
@@ -174,6 +173,7 @@ io.on("connection", (socket) => {
 
       io.to(roomCode).emit("user-left", {
         userCount: room.users.size,
+        userName: name,
       });
 
       if (room.public && room.users.size > 0) {
@@ -197,7 +197,9 @@ io.on("connection", (socket) => {
     rooms.forEach((room, roomCode) => {
       if (room.users.has(socket.id)) {
         room.users.delete(socket.id);
-        io.to(roomCode).emit("user-left", room.users.size);
+        io.to(roomCode).emit("user-left", {
+          userCount: room.users.size,
+        });
 
         if (room.public && room.users.size > 0) {
           io.emit("public-room-updated", {

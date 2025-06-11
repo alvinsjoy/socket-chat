@@ -30,6 +30,7 @@ export default function RoomPage() {
   const [user, setUser] = useState<{ id: string; name: string } | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
+  const [hasLeftRoom, setHasLeftRoom] = useState(false);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -48,7 +49,8 @@ export default function RoomPage() {
       !isJoining &&
       !joinError &&
       !hasAttemptedJoin &&
-      !wasAutoJoined;
+      !wasAutoJoined &&
+      !hasLeftRoom;
     if (shouldAttemptJoin) {
       setIsJoining(true);
       setHasAttemptedJoin(true);
@@ -65,11 +67,13 @@ export default function RoomPage() {
     hasAttemptedJoin,
     clearJoinError,
     wasAutoJoined,
+    hasLeftRoom,
   ]);
   useEffect(() => {
     if (currentRoom) {
       setIsJoining(false);
       setHasAttemptedJoin(false);
+      setHasLeftRoom(false);
     }
   }, [currentRoom]);
   useEffect(() => {
@@ -88,10 +92,12 @@ export default function RoomPage() {
       clearJoinError();
       setIsJoining(true);
       setHasAttemptedJoin(false);
+      setHasLeftRoom(false);
       joinRoom(roomCode.toUpperCase(), user.id, user.name);
     }
   }, [user, clearJoinError, joinRoom, roomCode]);
   const handleLeaveRoom = useCallback(() => {
+    setHasLeftRoom(true);
     leaveRoom();
     clearJoinError();
     router.push("/");
@@ -142,7 +148,7 @@ export default function RoomPage() {
         <div className="text-center space-y-4">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
           <p className="text-muted-foreground">
-            Joining room {roomCode.toUpperCase()}...
+            {hasLeftRoom ? "Leaving" : "Joining"} room {roomCode.toUpperCase()}
           </p>
         </div>
       </div>

@@ -277,7 +277,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   };
   const leaveRoom = () => {
     if (currentRoom && socket) {
-      socket.emit("leave-room", { roomCode: currentRoom });
+      const user = getStoredUser();
+      socket.emit("leave-room", {
+        roomCode: currentRoom,
+        userName: user?.name,
+      });
       setCurrentRoom(null);
       setCurrentRoomName(null);
       setMessages([]);
