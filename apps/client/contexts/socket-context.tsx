@@ -280,7 +280,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       const user = getStoredUser();
       socket.emit("leave-room", {
         roomCode: currentRoom,
-        userName: user?.name,
+        name: user?.name,
       });
       setCurrentRoom(null);
       setCurrentRoomName(null);
