@@ -126,6 +126,9 @@ importers:
       socket.io:
         specifier: ^4.8.1
         version: 4.8.1
+      zod:
+        specifier: ^3.25.51
+        version: 3.25.51
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
