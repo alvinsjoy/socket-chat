@@ -17,26 +17,25 @@ export default function Navbar() {
     setUser(getStoredUser());
   }, []);
 
-  const ConnectionIndicator = () => (
-    <Badge
-      variant={connected ? "default" : "destructive"}
-      className="flex items-center gap-2"
-    >
-      <div
-        className={`w-2 h-2 rounded-full ${
-          connected ? "bg-green-400" : "bg-red-400"
-        }`}
-      />
-      {connected ? "Connected" : "Disconnected"}
-    </Badge>
-  );
   return (
     <header className="flex justify-between items-center p-4 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center space-x-4">
         <Link href="/" className="flex items-center space-x-2">
           <h1 className="text-2xl font-bold text-foreground">Socket Chat</h1>
         </Link>
-        <ConnectionIndicator />
+        <Badge
+          variant={connected ? "default" : "destructive"}
+          className="flex items-center gap-2"
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${
+              connected ? "bg-green-400" : "bg-red-400"
+            }`}
+          />
+          <span className="hidden md:inline">
+            {connected ? "Connected" : "Disconnected"}
+          </span>
+        </Badge>
       </div>
       <div className="flex items-center space-x-4">
         {user && (

@@ -15,8 +15,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 
 interface PrivateRoomAlertProps {
   isOpen: boolean;
@@ -95,9 +95,9 @@ export function PrivateRoomAlert({
           </AlertDialogDescription>
         </AlertDialogHeader>{" "}
         <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button onClick={onClose} variant="outline" className="w-full">
+          <AlertDialogCancel onClick={onClose} className="w-full">
             Got it
-          </Button>
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
