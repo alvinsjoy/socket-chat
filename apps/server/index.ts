@@ -267,6 +267,31 @@ io.on("connection", (socket) => {
       console.error("Leave room validation error:", error);
     }
   });
+
+  socket.on("typing-start", (data) => {
+    try {
+      const { roomCode, userName, userId } = data;
+      socket.to(roomCode).emit("user-typing-start", {
+        userName,
+        userId,
+      });
+    } catch (error) {
+      console.error("Typing start error:", error);
+    }
+  });
+
+  socket.on("typing-stop", (data) => {
+    try {
+      const { roomCode, userName, userId } = data;
+      socket.to(roomCode).emit("user-typing-stop", {
+        userName,
+        userId,
+      });
+    } catch (error) {
+      console.error("Typing stop error:", error);
+    }
+  });
+
   socket.on("disconnect", () => {
     rooms.forEach((room, roomCode) => {
       if (room.users.has(socket.id)) {

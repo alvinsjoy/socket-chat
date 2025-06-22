@@ -23,6 +23,7 @@ interface SocketContextType {
   joinError: string | null;
   wasAutoJoined: boolean;
   newPrivateRoom: { code: string; name: string } | null;
+  typingUsers: string[];
   connect: () => void;
   disconnect: () => void;
   createRoom: (name: string, isPublic?: boolean) => void;
@@ -38,6 +39,8 @@ interface SocketContextType {
   leaveRoom: () => void;
   clearJoinError: () => void;
   clearNewPrivateRoom: () => void;
+  startTyping: (roomCode: string) => void;
+  stopTyping: (roomCode: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -68,6 +71,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     code: string;
     name: string;
   } | null>(null);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const connect = useCallback(() => {
     if (socket?.connected) return;
 
@@ -197,6 +201,27 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       socketInstance.on("already-in-room", () => {
         toast.warning("You are already in this room.");
       });
+
+      socketInstance.on(
+        "user-typing-start",
+        (data: { userName: string; userId: string }) => {
+          setTypingUsers((prev) => {
+            if (!prev.includes(data.userName)) {
+              return [...prev, data.userName];
+            }
+            return prev;
+          });
+        }
+      );
+
+      socketInstance.on(
+        "user-typing-stop",
+        (data: { userName: string; userId: string }) => {
+          setTypingUsers((prev) =>
+            prev.filter((name) => name !== data.userName)
+          );
+        }
+      );
     };
 
     setupEventListeners();
@@ -287,6 +312,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       setMessages([]);
       setWasAutoJoined(false);
       setNewPrivateRoom(null);
+      setTypingUsers([]);
     }
   };
   const clearJoinError = useCallback(() => {
@@ -295,6 +321,35 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const clearNewPrivateRoom = useCallback(() => {
     setNewPrivateRoom(null);
   }, []);
+
+  const startTyping = useCallback(
+    (roomCode: string) => {
+      if (socket && socket.connected) {
+        const user = getStoredUser();
+        socket.emit("typing-start", {
+          roomCode,
+          userName: user?.name,
+          userId: user?.id,
+        });
+      }
+    },
+    [socket]
+  );
+
+  const stopTyping = useCallback(
+    (roomCode: string) => {
+      if (socket && socket.connected) {
+        const user = getStoredUser();
+        socket.emit("typing-stop", {
+          roomCode,
+          userName: user?.name,
+          userId: user?.id,
+        });
+      }
+    },
+    [socket]
+  );
+
   const value: SocketContextType = {
     socket,
     connected,
@@ -306,6 +361,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     joinError,
     wasAutoJoined,
     newPrivateRoom,
+    typingUsers,
     connect,
     disconnect,
     createRoom,
@@ -316,6 +372,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     leaveRoom,
     clearJoinError,
     clearNewPrivateRoom,
+    startTyping,
+    stopTyping,
   };
 
   return (

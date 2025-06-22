@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { useSocket } from "@/contexts/socket-context";
 import { Message } from "@/lib/socket";
+import { Typing } from "@/components/typing";
 
 const messageSchema = z.object({
   message: z
@@ -40,9 +41,19 @@ export default function ChatRoom({
   userId,
   userName,
 }: ChatRoomProps) {
-  const { currentRoom, currentRoomName, messages, sendMessage } = useSocket();
+  const {
+    currentRoom,
+    currentRoomName,
+    messages,
+    sendMessage,
+    startTyping,
+    stopTyping,
+    typingUsers,
+  } = useSocket();
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
@@ -68,6 +79,14 @@ export default function ChatRoom({
   const onSubmit = (data: MessageFormData) => {
     if (currentRoom) {
       try {
+        if (isTyping) {
+          setIsTyping(false);
+          stopTyping(currentRoom);
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+          }
+        }
+
         sendMessage(currentRoom, data.message, userId, userName);
         form.reset();
       } catch {
@@ -77,6 +96,44 @@ export default function ChatRoom({
       toast.error("Not connected to a room. Please join a room first.");
     }
   };
+  const handleInputChange = (value: string) => {
+    if (!currentRoom) return;
+
+    if (value.trim() && !isTyping) {
+      setIsTyping(true);
+      startTyping(currentRoom);
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTyping) {
+        setIsTyping(false);
+        stopTyping(currentRoom);
+      }
+    }, 2000);
+
+    if (!value.trim() && isTyping) {
+      setIsTyping(false);
+      stopTyping(currentRoom);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (isTyping && currentRoom) {
+        stopTyping(currentRoom);
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [isTyping, currentRoom, stopTyping]);
 
   const formatMessageTime = (timestamp: Date) => {
     return new Date(timestamp).toLocaleTimeString([], {
@@ -184,10 +241,15 @@ export default function ChatRoom({
         <div ref={messagesEndRef} />
       </div>
       <div className="p-4 border-t border-border bg-card">
+        <Typing typingUsers={typingUsers.filter((user) => user !== userName)} />
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex space-x-2"
+            className={`flex space-x-2 ${
+              typingUsers.filter((user) => user !== userName).length > 0
+                ? "mt-3"
+                : ""
+            }`}
           >
             <FormField
               control={form.control}
@@ -199,6 +261,10 @@ export default function ChatRoom({
                       placeholder="Type a message..."
                       className="flex-1"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleInputChange(e.target.value);
+                      }}
                       autoFocus
                     />
                   </FormControl>

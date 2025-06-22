@@ -188,3 +188,15 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+@keyframes mercuryTyping {
+  0% {
+    transform: translateY(0px);
+  }
+  28% {
+    transform: translateY(-5px);
+  }
+  44% {
+    transform: translateY(0px);
+  }
+}
