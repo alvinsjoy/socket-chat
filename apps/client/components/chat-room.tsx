@@ -245,7 +245,7 @@ export default function ChatRoom({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className={`flex space-x-2 ${
+            className={`flex items-end gap-2 transition-all duration-300 ${
               typingUsers.filter((user) => user !== userName).length > 0
                 ? "mt-3"
                 : ""
@@ -257,26 +257,45 @@ export default function ChatRoom({
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                    <Input
-                      placeholder="Type a message..."
-                      className="flex-1"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        handleInputChange(e.target.value);
-                      }}
-                      autoFocus
-                    />
+                    <div
+                      className={`transition-all duration-300 ${
+                        form.formState.isValid && !form.formState.isSubmitting
+                          ? "pr-2"
+                          : ""
+                      }`}
+                    >
+                      <Input
+                        placeholder="Type a message..."
+                        className="w-full"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          handleInputChange(e.target.value);
+                        }}
+                        autoFocus
+                      />
+                    </div>
                   </FormControl>
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              disabled={!form.formState.isValid || form.formState.isSubmitting}
+            <div
+              className={`transition-all duration-300 ease-out ${
+                form.formState.isValid && !form.formState.isSubmitting
+                  ? "w-10 opacity-100 translate-x-0"
+                  : "w-0 opacity-0 translate-x-4 overflow-hidden"
+              }`}
             >
-              <LuSend />
-            </Button>
+              <Button
+                type="submit"
+                className="w-10 h-10 rounded-full transform transition-transform duration-200 hover:scale-105 active:scale-95"
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+              >
+                <LuSend />
+              </Button>
+            </div>
           </form>
         </Form>
       </div>
