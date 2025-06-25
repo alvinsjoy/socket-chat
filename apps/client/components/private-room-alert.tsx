@@ -53,22 +53,22 @@ export function PrivateRoomAlert({
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-4">
             <div className="text-center">
-              <p className="mb-2">
+              <div className="mb-2">
                 Your private room &ldquo;<strong>{roomData.name}</strong>&rdquo;
                 has been created.
-              </p>{" "}
+              </div>
               <div
                 className="bg-muted p-4 rounded-lg border-2 border-dashed cursor-pointer hover:bg-muted/80 transition-colors relative group"
                 onClick={handleCopyCode}
               >
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
+                  <div className="text-sm text-muted-foreground mb-2">
                     Room Code
-                  </p>
+                  </div>
                   <div className="flex items-center justify-center gap-3">
-                    <p className="text-2xl font-bold font-mono tracking-wider">
+                    <div className="text-2xl font-bold font-mono tracking-wider">
                       {roomData.code}
-                    </p>
+                    </div>
                     {copied ? (
                       <LuCheck className="h-5 w-5 text-green-500" />
                     ) : (
@@ -76,24 +76,24 @@ export function PrivateRoomAlert({
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-center">
+                <div className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-center">
                   Click to copy
-                </p>
+                </div>
               </div>
             </div>
             <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3">
-              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+              <div className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
                 <LuOctagonAlert />
                 Save this room code now!
-              </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              </div>
+              <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                 This code will not be shown again. You and{" "}
                 <strong>your friend</strong> cannot join this private room
                 without it.
-              </p>
+              </div>
             </div>
           </AlertDialogDescription>
-        </AlertDialogHeader>{" "}
+        </AlertDialogHeader>
         <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
           <AlertDialogCancel onClick={onClose} className="w-full">
             Got it

@@ -250,6 +250,7 @@ export default function ChatRoom({
                 ? "mt-3"
                 : ""
             }`}
+            autoComplete="off"
           >
             <FormField
               control={form.control}
