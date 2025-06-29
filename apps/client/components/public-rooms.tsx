@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useSocket } from "@/contexts/socket-context";
 import { LuClock } from "react-icons/lu";
+import { Loader } from "@/components/loader";
 
 interface PublicRoomsProps {
   onRoomSelect: (roomCode: string) => void;
@@ -62,8 +63,8 @@ export default function PublicRooms({
       {!connected && (
         <div className="space-y-4">
           <div className="text-center text-muted-foreground py-8">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Connecting to server...</p>
+            <Loader />
+            <p className="mt-4">Connecting to server...</p>
           </div>
           <div className="bg-chart-1/10 border border-chart-1/20 rounded-lg p-4">
             <p className="text-sm text-chart-1 font-medium flex items-center gap-2">

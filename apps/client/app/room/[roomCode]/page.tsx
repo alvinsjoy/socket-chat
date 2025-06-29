@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { LuOctagonAlert } from "react-icons/lu";
 import Link from "next/link";
 import { PrivateRoomAlert } from "@/components/private-room-alert";
+import { Loader } from "@/components/loader";
 
 export default function RoomPage() {
   const params = useParams();
@@ -110,7 +111,7 @@ export default function RoomPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-4">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <Loader />
           <p className="text-muted-foreground">Connecting to server...</p>
         </div>
       </div>
