@@ -57,6 +57,16 @@ const leaveRoomSchema = z.object({
 
 const app = express();
 const httpServer = createServer(app);
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    rooms: rooms.size,
+  });
+});
+
 const io = new Server(httpServer, {
   cors: {
     origin: [
