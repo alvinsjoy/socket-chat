@@ -54,6 +54,7 @@ export default function ChatRoom({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
@@ -64,6 +65,17 @@ export default function ChatRoom({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const handleKeyDown = () => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleCopyCode = async () => {
     if (currentRoom) {
@@ -274,6 +286,7 @@ export default function ChatRoom({
                           handleInputChange(e.target.value);
                         }}
                         autoFocus
+                        ref={inputRef}
                       />
                     </div>
                   </FormControl>
